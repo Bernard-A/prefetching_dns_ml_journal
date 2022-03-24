@@ -127,3 +127,14 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+# Pycharm Folder
+.idea
+
+# Data files
+antenna_location.csv
+donneesgSplittedForPython
+follow.txt
+log.txt
+prox_antenna.csv
