@@ -203,7 +203,5 @@ def cache_limit_handler(antenna_id):
     cache_expiration_value += (300-min_val)
 
 
-
-
 if __name__ == "__main__":
     main()
