@@ -1,10 +1,12 @@
 import argparse
 
+
 def get_parser():
     parser = argparse.ArgumentParser("CLI DNS and Prefetch handler ")
     parser.add_argument("input_chain", help="Input Chain Data")
     parser.add_argument("--output_file", "-o", default="cmd.sh", help="Associated command to run")
     return parser
+
 
 def main():
     args = get_parser().parse_args()

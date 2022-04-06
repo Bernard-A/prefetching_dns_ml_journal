@@ -18,6 +18,7 @@ follow_file_name = "follow.txt"
 cache_expiration_counter = 0
 cache_expiration_value = 0
 
+
 def get_parser():
     parser = argparse.ArgumentParser("CLI DNS and Prefetch handler ")
     parser.add_argument("data_input", help="Input Data, file example provided in the documentation")
@@ -126,7 +127,6 @@ def antenna_dns_expiration(delay):
             dict_antenna[antenna_identifier].pop(numTraj)
         cache_expiration_counter += len(outlist)
         cache_expiration_value += 300*len(outlist)
-
 
 
 def antennas_follow_array():

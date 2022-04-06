@@ -8,7 +8,7 @@ hexa:
 
 square:
 	sh time_vehicle_deduplication.sh square/input_data_square
-	
+
 random:
 	sh time_vehicle_deduplication.sh random/input_data_random
 
