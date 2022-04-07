@@ -14,6 +14,7 @@ def main():
     cmd_string = pattern(input_chain)
 
     with open("cmds/" + args.input_chain + "-" + args.output_file, 'w') as output_file:
+        output_file.write("cd .. && ")
         output_file.write(cmd_string)
         print("Command to run : " + cmd_string)
 
@@ -60,10 +61,9 @@ def pattern (input_chain):
                  + "_" + duplication_scenario + "_split" + prefetching_scenario \
                  + "-a " + antenna_locations + "/Antennas_location_" + antenna_locations + ".csv " \
                  + "-p " + antenna_locations + "/prox_antenna_" + antenna_locations + ".json " + cache_limit \
-                 + "-o " + antenna_locations + "/" + input_chain + ".csv"
+                 + "-o Results/" + input_chain + ".csv" + " --logfile Logs/" + input_chain + "-log.txt"
 
     return cmd_string
-
 
 
 if __name__ == "__main__":
