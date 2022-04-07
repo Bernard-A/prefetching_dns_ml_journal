@@ -1,4 +1,4 @@
-make: hexa square random cmds results
+make: hexa square random cmds results logs
 
 clean:
 	rm -rf hexa/input_data_hexa_daily_split hexa/input_data_hexa_hourly_split square/input_data_square_daily_split square/input_data_square_hourly_split random/input_data_random_daily_split random/input_data_random_hourly_split
@@ -18,3 +18,5 @@ cmds :
 results:
 	mkdir Results
 
+logs:
+	mkdir Logs
