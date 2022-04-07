@@ -10,8 +10,15 @@ def get_parser():
 
 def main():
     args = get_parser().parse_args()
-
     input_chain = args.input_chain
+    cmd_string = pattern(input_chain)
+
+    with open("cmds/" + args.input_chain + "-" + args.output_file, 'w') as output_file:
+        output_file.write(cmd_string)
+        print("Command to run : " + cmd_string)
+
+
+def pattern (input_chain):
 
     match input_chain[0]:
         case "1":
@@ -49,14 +56,14 @@ def main():
         case _:
             raise NotImplementedError("Not handling other cases than Unlimited or limited (to 2500)")
 
-    with open(args.output_file, 'w') as output_file:
-        cmd_string = "python main.py " + antenna_locations + "/input_data_" + antenna_locations \
-                     + "_" + duplication_scenario + "_split" + prefetching_scenario \
-                     + "-a " + antenna_locations + "/Antennas_location_" + antenna_locations + ".csv " \
-                     + "-p " + antenna_locations + "/prox_antenna_" + antenna_locations + ".json " + cache_limit \
-                     + "-o " + antenna_locations + "/" + input_chain + ".csv"
-        output_file.write(cmd_string)
-        print("Command to run : " + cmd_string)
+    cmd_string = "python main.py " + antenna_locations + "/input_data_" + antenna_locations \
+                 + "_" + duplication_scenario + "_split" + prefetching_scenario \
+                 + "-a " + antenna_locations + "/Antennas_location_" + antenna_locations + ".csv " \
+                 + "-p " + antenna_locations + "/prox_antenna_" + antenna_locations + ".json " + cache_limit \
+                 + "-o " + antenna_locations + "/" + input_chain + ".csv"
+
+    return cmd_string
+
 
 
 if __name__ == "__main__":
