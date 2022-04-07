@@ -1,4 +1,4 @@
-make: hexa square random
+make: hexa square random cmds results
 
 clean:
 	rm -rf hexa/input_data_hexa_daily_split hexa/input_data_hexa_hourly_split square/input_data_square_daily_split square/input_data_square_hourly_split random/input_data_random_daily_split random/input_data_random_hourly_split
@@ -11,4 +11,10 @@ square:
 
 random:
 	sh time_vehicle_deduplication.sh random/input_data_random
+
+cmds : 
+	mkdir cmds
+
+results:
+	mkdir Results
 
