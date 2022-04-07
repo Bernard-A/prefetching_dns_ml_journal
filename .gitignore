@@ -138,3 +138,9 @@ donneesgSplittedForPython
 follow.txt
 log.txt
 prox_antenna.csv
+
+# Commands folder
+cmds/
+
+# Results folder
+Results/
