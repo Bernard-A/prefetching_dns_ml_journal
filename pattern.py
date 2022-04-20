@@ -61,7 +61,9 @@ def pattern (input_chain):
                  + "_" + duplication_scenario + "_split" + prefetching_scenario \
                  + "-a " + antenna_locations + "/Antennas_location_" + antenna_locations + ".csv " \
                  + "-p " + antenna_locations + "/prox_antenna_" + antenna_locations + ".json " + cache_limit \
-                 + "-o Results/" + input_chain + ".csv" + " --logfile Logs/" + input_chain + "-log.txt"
+                 + "-o Results/" + input_chain + ".csv " \
+                 + "--antenna_caching_datafile Results/" + input_chain + "-antenna-output.csv " \
+                 + "--logfile Logs/" + input_chain + "-log.txt"
 
     return cmd_string
 
