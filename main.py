@@ -57,8 +57,8 @@ def main():
     dataframe_antennas = pd.read_csv(args.antenna_file)
     for identifier in dataframe_antennas.antenna_id:
         dict_antenna[identifier] = {0: 0}
-    dataframe_antennas.insert(len(dataframe_antennas.columns), 'expiration_counter', 0)
     dataframe_antennas.insert(len(dataframe_antennas.columns), 'expiration_value_cumulative', 0)
+    dataframe_antennas.insert(len(dataframe_antennas.columns), 'expiration_counter', 0)
     dataframe_antennas.insert(len(dataframe_antennas.columns), 'expiration_value_mean', 0)
 
     # Loading antenna_proximity dictionary
@@ -113,7 +113,7 @@ def main():
 
     dataframe_antennas.expiration_value_mean = \
         dataframe_antennas.expiration_value_cumulative / dataframe_antennas.expiration_counter
-    dataframe_antennas.to_csv(args.antenna_caching_datafile)
+    dataframe_antennas.to_csv(args.antenna_caching_datafile, index=False)
 
 
 def antenna_dns_expiration(delay):
