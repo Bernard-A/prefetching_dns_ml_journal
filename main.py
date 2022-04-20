@@ -11,12 +11,9 @@ CACHE_LIMIT = False
 # Initialize antenna cache
 dict_antenna = dict()
 global prox_antenna
+global dataframe_antennas
 # Default follow file
 follow_file_name = "follow.txt"
-
-# Counting the cache mean time
-cache_expiration_counter = 0
-cache_expiration_value = 0
 
 
 def get_parser():
@@ -32,6 +29,8 @@ def get_parser():
     parser.add_argument("--cache_size", "-l", default=0, help="<Integer>, decides upon cache limit (0 for no limit, "
                                                               "default 0)")
     parser.add_argument("--output_file", "-o", default="follow.txt", help="Output file, size of each cache over time")
+    parser.add_argument("--antenna_caching_datafile", default="antenna_output.csv",
+                        help="Loads mean time for entries in cache")
     parser.add_argument("--logfile", default="log.txt", help="Log the execution input")
     return parser
 
@@ -54,9 +53,13 @@ def main():
     dataframe_vehicle_movements = pd.read_csv(args.data_input, sep=" ", index_col=False)
 
     # Loading antennas profile and antenna ids
+    global dataframe_antennas
     dataframe_antennas = pd.read_csv(args.antenna_file)
     for identifier in dataframe_antennas.antenna_id:
         dict_antenna[identifier] = {0: 0}
+    dataframe_antennas.insert(len(dataframe_antennas.columns), 'expiration_counter', 0)
+    dataframe_antennas.insert(len(dataframe_antennas.columns), 'expiration_value_cumulative', 0)
+    dataframe_antennas.insert(len(dataframe_antennas.columns), 'expiration_value_mean', 0)
 
     # Loading antenna_proximity dictionary
     global prox_antenna
@@ -103,19 +106,19 @@ def main():
         print("Number of Prefetching Requests " + str(dns_prefetching_requests))
         logfile.write("Number of Moving devices " + str(len(dataframe_vehicle_movements.index)) + "\n")
         print("Number of Moving devices " + str(len(dataframe_vehicle_movements.index)))
-        logfile.write("Average Time in cache " + str(cache_expiration_value/cache_expiration_counter) + "\n")
-        print("Average Time in cache " + str(cache_expiration_value/cache_expiration_counter))
         logfile.write("Output stored as " + str(args.output_file) + "\n")
         print("Output stored as " + str(args.output_file))
         logfile.write("Algorithm ended at " + str(datetime.now()) + "\n")
         print("Algorithm ended at " + str(datetime.now()))
 
+    dataframe_antennas.expiration_value_mean = \
+        dataframe_antennas.expiration_value_cumulative / dataframe_antennas.expiration_counter
+    dataframe_antennas.to_csv(args.antenna_caching_datafile)
+
 
 def antenna_dns_expiration(delay):
     # This function removes <delay> time from the antennas cache and pops expired data from the dictionaries
     # In : delay (int)
-    global cache_expiration_counter
-    global cache_expiration_value
 
     for antenna_identifier in dict_antenna:
         outlist = []
@@ -125,8 +128,9 @@ def antenna_dns_expiration(delay):
                 outlist.append(numTraj)
         for numTraj in outlist:
             dict_antenna[antenna_identifier].pop(numTraj)
-        cache_expiration_counter += len(outlist)
-        cache_expiration_value += 300*len(outlist)
+            dataframe_antennas.loc[dataframe_antennas.antenna_id == antenna_identifier, 'expiration_counter'] += 1
+            dataframe_antennas.loc[
+                dataframe_antennas.antenna_id == antenna_identifier, 'expiration_value_cumulative'] += 300
 
 
 def antennas_follow_array():
@@ -193,14 +197,13 @@ def antennas_prefetch_handler(row_handled, scenario):
 
 
 def cache_limit_handler(antenna_id):
-    global cache_expiration_counter
-    global cache_expiration_value
 
     min_val = dict_antenna[antenna_id][min(dict_antenna[antenna_id], key=dict_antenna[antenna_id].get)]
     del dict_antenna[antenna_id][min(dict_antenna[antenna_id], key=dict_antenna[antenna_id].get)]
 
-    cache_expiration_counter += 1
-    cache_expiration_value += (300-min_val)
+    dataframe_antennas.loc[dataframe_antennas.antenna_id == antenna_id, 'expiration_counter'] += 1
+    dataframe_antennas.loc[
+        dataframe_antennas.antenna_id == antenna_id, 'expiration_value_cumulative'] += (300-min_val)
 
 
 if __name__ == "__main__":
