@@ -14,6 +14,8 @@ global prox_antenna
 global dataframe_antennas
 # Default follow file
 follow_file_name = "follow.txt"
+antenna_caching_datafile_name = "antenna_output.csv"
+logs_file_name = "log.txt"
 
 
 def get_parser():
@@ -38,10 +40,32 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
 
+    # Cleaning_up output files
+    if os.path.exists(args.output_file):
+        print("Please remove previous output file : ", str(args.output_file))
+        return 0
+    else:
+        global follow_file_name
+        follow_file_name = args.output_file
+
+    if os.path.exists(args.antenna_caching_datafile):
+        print("Please remove previous antenna output file : ", str(args.antenna_caching_datafile))
+        return 0
+    else:
+        global antenna_caching_datafile_name
+        antenna_caching_datafile_name = args.antenna_caching_datafile
+
+    if os.path.exists(args.logfile):
+        print("Please remove previous logfile : ", str(args.logfile))
+        return 0
+    else:
+        global logs_file_name
+        logs_file_name = args.logfile
+
     with open(args.logfile, 'a') as logfile:
         logfile.write("\n\nStarting algorithm execution\n")
         print("\n\nStarting algorithm execution")
-        logfile.write("Arguments are " + str(args)+"\n")
+        logfile.write("Arguments are " + str(args) + "\n")
         print("Arguments are " + str(args))
         logfile.write("Algorithm started at " + str(datetime.now()) + "\n")
         print("Algorithm started at " + str(datetime.now()))
@@ -57,8 +81,10 @@ def main():
     dataframe_antennas = pd.read_csv(args.antenna_file)
     for identifier in dataframe_antennas.antenna_id:
         dict_antenna[identifier] = {0: 0}
-    dataframe_antennas.insert(len(dataframe_antennas.columns), 'expiration_value_cumulative', 0)
-    dataframe_antennas.insert(len(dataframe_antennas.columns), 'expiration_counter', 0)
+    dataframe_antennas.insert(len(dataframe_antennas.columns), 'dns_requests_counter', 0)
+    dataframe_antennas.insert(len(dataframe_antennas.columns), 'dns_prefetching_requests_counter', 0)
+    dataframe_antennas.insert(len(dataframe_antennas.columns), 'expiration_value_cumulative', -300)
+    dataframe_antennas.insert(len(dataframe_antennas.columns), 'expiration_counter', -1)
     dataframe_antennas.insert(len(dataframe_antennas.columns), 'expiration_value_mean', 0)
 
     # Loading antenna_proximity dictionary
@@ -72,17 +98,7 @@ def main():
     CACHE_MAX_SIZE = int(args.cache_size)
     CACHE_LIMIT = (CACHE_MAX_SIZE != 0)
 
-    # Cleaning_up output file
-    if os.path.exists(args.output_file):
-        print("Please remove previous output file")
-        return 0
-    else:
-        global follow_file_name
-        follow_file_name = args.output_file
-
     prev_time = dataframe_vehicle_movements.sort_values(by=['Time']).iloc[0]['Time']
-    dns_requests = 0
-    dns_prefetching_requests = 0
 
     for idx, row in dataframe_vehicle_movements.sort_values(by=['Time']).iterrows():
         current_time = row['Time']
@@ -92,22 +108,20 @@ def main():
                 antenna_dns_expiration(1)
             prev_time = current_time
 
-        dns_requests += dns_request(row['NumTraj'], row['Antenna0'])
+        if dns_request(row['NumTraj'], row['Antenna0']) > 0:
+            dataframe_antennas.loc[
+                dataframe_antennas.antenna_id == int(row['Antenna0']), 'dns_requests_counter'] += 1
 
         solicited_antennas = antennas_prefetch_handler(row, scenario)
-        dns_prefetching_requests += prefetching_request(row['NumTraj'], solicited_antennas)
+        prefetching_request(row['NumTraj'], solicited_antennas)
 
-    with open(args.logfile, 'a') as logfile:
+    with open(logs_file_name, 'a') as logfile:
         logfile.write("End of Program\n")
         print("End of Program")
-        logfile.write("Number of DNS Requests " + str(dns_requests) + "\n")
-        print("Number of DNS Requests " + str(dns_requests))
-        logfile.write("Number of Prefetching Requests " + str(dns_prefetching_requests) + "\n")
-        print("Number of Prefetching Requests " + str(dns_prefetching_requests))
         logfile.write("Number of Moving devices " + str(len(dataframe_vehicle_movements.index)) + "\n")
         print("Number of Moving devices " + str(len(dataframe_vehicle_movements.index)))
-        logfile.write("Output stored as " + str(args.output_file) + "\n")
-        print("Output stored as " + str(args.output_file))
+        logfile.write("Output stored as " + str(follow_file_name) + "\n")
+        print("Output stored as " + str(follow_file_name))
         logfile.write("Algorithm ended at " + str(datetime.now()) + "\n")
         print("Algorithm ended at " + str(datetime.now()))
 
@@ -154,7 +168,7 @@ def dns_request(vehicle_id, antenna_id):
         dict_antenna[antenna_id][vehicle_id] = 300
         if CACHE_LIMIT and (len(dict_antenna[antenna_id]) > CACHE_MAX_SIZE):
             cache_limit_handler(antenna_id)
-        return 1
+        return antenna_id
     return 0
 
 
@@ -166,13 +180,10 @@ def prefetching_request(vehicle_id, antenna_ids):
     if not antenna_ids:
         return 0
 
-    # count the number of dns prefetching requests performed
-    dns_prefetching_count = 0
-
     for antenna_id in antenna_ids:
-        dns_prefetching_count += dns_request(vehicle_id, antenna_id)
-
-    return dns_prefetching_count
+        if dns_request(vehicle_id, antenna_id) > 0:
+            dataframe_antennas.loc[dataframe_antennas.antenna_id == antenna_id, 'dns_prefetching_requests_counter'] += 1
+    return 1
 
 
 def antennas_prefetch_handler(row_handled, scenario):
@@ -197,13 +208,12 @@ def antennas_prefetch_handler(row_handled, scenario):
 
 
 def cache_limit_handler(antenna_id):
-
     min_val = dict_antenna[antenna_id][min(dict_antenna[antenna_id], key=dict_antenna[antenna_id].get)]
     del dict_antenna[antenna_id][min(dict_antenna[antenna_id], key=dict_antenna[antenna_id].get)]
 
     dataframe_antennas.loc[dataframe_antennas.antenna_id == antenna_id, 'expiration_counter'] += 1
     dataframe_antennas.loc[
-        dataframe_antennas.antenna_id == antenna_id, 'expiration_value_cumulative'] += (300-min_val)
+        dataframe_antennas.antenna_id == antenna_id, 'expiration_value_cumulative'] += (300 - min_val)
 
 
 if __name__ == "__main__":
