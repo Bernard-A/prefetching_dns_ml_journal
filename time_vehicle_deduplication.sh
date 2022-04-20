@@ -39,13 +39,13 @@ else
 	# Duplicates the trajectory on a daily basis (scenario 2)
 	echo "Generating data for scenario 2"
 	## Duplication
-	awk '{numtraj+=1;for (i=0;i<1000;i++) {y=rand();x=24*60*60*y;if (i==0) x=0;printf("%d %d ",(numtraj-1)*1000+i,x);for (j=0;j<10;j++) {printf("%d %d %d %d %d %d ",($1+x>24*60*60?$(j*6+1)+x-24*60*60:$(j*6+1)+x),$(j*6+2),$(j*6+3),$(j*6+4),$(j*6+5),$(j*6+6))};printf("\n");}}' donneese > donneesg
+	awk '{numtraj+=1;for (i=0;i<1000;i++) {y=rand();x=24*60*60*y;if (i==0) x=0;printf("%d %d ",(numtraj-1)*1000+i,x);for (j=0;j<10;j++) {if (j==0) over=0; if (j==0 && $1+x>25*60*60) over=1; printf("%d %d %d %d %d %d ",$(j*6+1)+x-(over*24*60*60),$(j*6+2),$(j*6+3),$(j*6+4),$(j*6+5),$(j*6+6))};printf("\n");}}' donneese > donneesg
 	
 	## Adds label for pandas dataframe (python script)
 	echo "NumTraj RandValue Time Antenna0 Antenna1 Antenna2 Antenna3 Antenna4" > donneesgSplittedForPython
 	
 	## Splits trajectories back
-	awk '{for(j=0;j<10;j++){printf("%d %d %d %d %d %d %d %d ",$1,$2,$(j*6+3),$(j*6+4),$(j*6+5),$(j*6+6),$(j*6+7),$(j*6+8));printf("\n");}}' donneesg >> donneesgSplittedForPython
+	awk '{for(j=0;j<10;j++){printf("%d %d %d %d %d %d %d %d ",$1,$2,($(j*6+3)>0?$(j*6+3):$(j*6+3)+24*60*60),$(j*6+4),$(j*6+5),$(j*6+6),$(j*6+7),$(j*6+8));printf("\n");}}' donneesg >> donneesgSplittedForPython
 	
 	# Write to correct folder
 	echo "Writing output to correct file"
