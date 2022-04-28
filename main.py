@@ -109,8 +109,7 @@ def main():
             prev_time = current_time
 
         if dns_request(row['NumTraj'], row['Antenna0']) > 0:
-            dataframe_antennas.loc[
-                dataframe_antennas.antenna_id == int(row['Antenna0']), 'dns_requests_counter'] += 1
+            dataframe_antennas.loc[int(row['Antenna0'])-1, 'dns_requests_counter'] += 1
 
         solicited_antennas = antennas_prefetch_handler(row, scenario)
         prefetching_request(row['NumTraj'], solicited_antennas)
@@ -142,9 +141,8 @@ def antenna_dns_expiration(delay):
                 outlist.append(numTraj)
         for numTraj in outlist:
             dict_antenna[antenna_identifier].pop(numTraj)
-            dataframe_antennas.loc[dataframe_antennas.antenna_id == antenna_identifier, 'expiration_counter'] += 1
-            dataframe_antennas.loc[
-                dataframe_antennas.antenna_id == antenna_identifier, 'expiration_value_cumulative'] += 300
+            dataframe_antennas.loc[antenna_identifier-1, 'expiration_counter'] += 1
+            dataframe_antennas.loc[antenna_identifier-1, 'expiration_value_cumulative'] += 300
 
 
 def antennas_follow_array():
@@ -182,7 +180,7 @@ def prefetching_request(vehicle_id, antenna_ids):
 
     for antenna_id in antenna_ids:
         if dns_request(vehicle_id, antenna_id) > 0:
-            dataframe_antennas.loc[dataframe_antennas.antenna_id == antenna_id, 'dns_prefetching_requests_counter'] += 1
+            dataframe_antennas.loc[antenna_id-1, 'dns_prefetching_requests_counter'] += 1
     return 1
 
 
@@ -211,9 +209,8 @@ def cache_limit_handler(antenna_id):
     min_val = dict_antenna[antenna_id][min(dict_antenna[antenna_id], key=dict_antenna[antenna_id].get)]
     del dict_antenna[antenna_id][min(dict_antenna[antenna_id], key=dict_antenna[antenna_id].get)]
 
-    dataframe_antennas.loc[dataframe_antennas.antenna_id == antenna_id, 'expiration_counter'] += 1
-    dataframe_antennas.loc[
-        dataframe_antennas.antenna_id == antenna_id, 'expiration_value_cumulative'] += (300 - min_val)
+    dataframe_antennas.loc[antenna_id-1, 'expiration_counter'] += 1
+    dataframe_antennas.loc[antenna_id-1, 'expiration_value_cumulative'] += (300 - min_val)
 
 
 if __name__ == "__main__":
